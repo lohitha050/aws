@@ -1,0 +1,17 @@
+# Do not change version. This is the version of aws buildspec, not the version of your buldspec file.
+version: 0.2
+ 
+phases:
+  install:
+    runtime-versions:
+      nodejs: latest
+    commands:
+      - echo "Installing something"
+  pre_build:
+    commands:
+      - echo "We are in the build block"
+      - echo "We will run some test"
+      - grep -Fq "Congratulation" index.html
+  post_build:
+    commands:
+      - echo "We are in the post build phase"
