@@ -1,28 +1,33 @@
 import os
-import platform
-import subprocess
+import time
 
 def get_uptime():
-    system = platform.system()
-    if system == "Linux" or system == "Darwin":
-        try:
-            # Use the 'uptime' command
-            output = subprocess.check_output("uptime -p", shell=True, text=True)
-            print("System Uptime:", output.strip())
-        except Exception as e:
-            print("Error getting uptime:", e)
-    elif system == "Windows":
-        try:
-            # Use 'net stats srv' and parse output
-            output = subprocess.check_output("net stats srv", shell=True, text=True)
-            for line in output.splitlines():
-                if "Statistics since" in line:
-                    print("System Uptime (since):", line)
-                    break
-        except Exception as e:
-            print("Error getting uptime:", e)
+    if os.name == "posix":
+        # Linux/Unix systems
+        with open("/proc/uptime", "r") as f:
+            uptime_seconds = float(f.readline().split()[0])
+    elif os.name == "nt":
+        # Windows systems
+        import ctypes
+        import sys
+        if sys.getwindowsversion().major >= 6:
+            # Windows Vista or later
+            kernel32 = ctypes.windll.kernel32
+            uptime_ms = kernel32.GetTickCount64()
+        else:
+            uptime_ms = ctypes.windll.kernel32.GetTickCount()
+        uptime_seconds = uptime_ms / 1000.0
     else:
-        print("Unsupported Operating System")
+        raise NotImplementedError("Unsupported OS")
+
+    return uptime_seconds
+
+def format_uptime(seconds):
+    mins, secs = divmod(int(seconds), 60)
+    hours, mins = divmod(mins, 60)
+    days, hours = divmod(hours, 24)
+    return f"{days}d {hours}h {mins}m {secs}s"
 
 if __name__ == "__main__":
-    get_uptime()
+    uptime_seconds = get_uptime()
+    print("System Uptime:", format_uptime(uptime_seconds))
